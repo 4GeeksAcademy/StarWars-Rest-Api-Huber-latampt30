@@ -38,35 +38,57 @@ def sitemap():
 
 @app.route('/people', methods=['GET'])
 def get_people():
+    people = People.query.all()
+    return jsonify([person.serialize() for person in people])
 
-    characters = People.query.all()
-    all_characters = list(map(lambda x: x.serialize(), characters))
+@app.route('/people', methods=['POST'])
+def post_people():
+    new_person = People()
+    
+    new_person.name = request.json['name']
+    new_person.birthyear=request.json['birth_year']
+    new_person.gender = request.json['gender']
+    new_person.height = request.json['height']
 
-    return jsonify(all_characters), 200
+    db.session.add(new_person)
+    db.session.commit()
 
 @app.route('/people/<int:people_id>', methods=['GET'])
-def get_single_character(people_id):
+def get_person(people_id):
 
-    single_character = People.query.get(people_id)
-    if single_character is None:
-        return jsonify({"Message": "Error, character no encontrado"}), 404
-    return jsonify(single_character), 200
+    person = People.query.get(people_id)
+    if person is None:
+        return jsonify({"Message": "Error, no encontrado"}), 404
+    return jsonify(person), 200
 
 @app.route('/planets', methods=['GET'])
 def get_planets():
-
     planets = Planet.query.all()
-    all_planets = list(map(lambda x: x.serialize(), planets))
-
-    return jsonify(all_planets), 200
+    return jsonify([planet.serialize() for planet in planets])
 
 @app.route('/planets/<int:people_id>', methods=['GET'])
-def get_single_planet(planet_id):
+def get_planet(planet_id):
 
-    single_planet = Planet.query.get(planet_id)
-    if single_planet is None:
-        return jsonify({"Message": "Error, planeta no encontrado"}), 404
-    return jsonify(single_planet), 200
+    planet = Planet.query.get(planet_id)
+    if planet is None:
+        return jsonify({"Message": "Error, no encontrado"}), 404
+    return jsonify(planet), 200
+
+@app.route('/planets', methods=['POST'])
+def post_planets():
+    new_planet = Planet()
+
+    new_planet.name = request.json['name']
+    new_planet.climate = request.json['climate']
+    new_planet.population = request.json['population']
+
+    db.session.add(new_planet)
+    db.session.commit()
+    
+    return jsonify({
+        "message": 'planet created',
+        "user_id": new_planet.id
+    }),201
 
 
 @app.route('/users/favorite', methods=['GET'])
@@ -92,7 +114,7 @@ def get_user_favorites():
 
 
 @app.route('/favorites/people/<int:people_id>', methods=['POST'])
-def add_character_favorite(people_id):
+def add_person_favorite(people_id):
 
     user_id = request.args.get('user_id')
     user = User.query.get(user_id)
@@ -112,7 +134,7 @@ def add_character_favorite(people_id):
     return jsonify({"Message": "Se agrego caracter favorito"}, new_favorite), 201
 
 @app.route('/favorites/people/<int:people_id>', methods=['DELETE'])
-def delete_character_favorite(people_id):
+def delete_person_favorite(people_id):
 
     user_id = request.args.get('user_id')
     user = User.query.get(user_id)
@@ -122,7 +144,7 @@ def delete_character_favorite(people_id):
         return jsonify({"Message": "No se encontro el usuario"}), 404
 
     if character is None:
-        return jsonify({"Message": "No se encontro el caracter"}), 404
+        return jsonify({"Message": "No se encontro el personaje"}), 404
 
     favorite = Favorite.query.filter_by(user_id=user_id, planet_id=people_id).first()
 
@@ -175,11 +197,24 @@ def delete_planet_favorite(planet_id):
 
 @app.route('/user', methods=['GET'])
 def get_users():
-
     users = User.query.all()
-    all_users = list(map(lambda x: x.serialize(), users))
+    return jsonify([user.serialize() for user in users])
 
-    return jsonify(all_users), 200
+@app.route('/users', methods=['POST'])
+def post_user():
+    new_user = User()
+
+    new_user.email = request.json['email']
+    new_user.name = request.json['name']
+    new_user.password = request.json['password']
+
+    db.session.add(new_user)
+    db.session.commit()
+    
+    return jsonify({
+        "message": 'usuario creado',
+        "user_id": new_user.id
+    }),201
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
